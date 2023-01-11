@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+
+<style> 
+    
+.form {
+     margin: auto;
+     border: 1px dashed;
+     width: 30%;
+     padding: 20px;
+}
+    
+.box { 
+    width: 50px; 
+    height: 50px; 
+    border: 20px solid #000000; 
+    border-top: 20px solid red; 
+    border-radius: 50%; 
+    background-color: lightgray;
+
+    animation: AAA .7s linear infinite; 
+}
+@keyframes AAA {
+    0% { transform: rotate(0deg) ; }
+    50%{ transform: rotate(180deg); } 
+    100% { transform: rotate(359deg); } 
+} 
+
+#tz, #state, #city
+{
+    display: none;
+}
+    
+</style> 
+
+ 
+</head>
+
+<body>
+<h2> To Do: </h2> <br>
+Get weather at random location (latitude and longitude)<br>
+Store recent weather requests <br>
+Update weather/location after a period of time <br><br>
+
+<div class = "form">
+<h2> Weather Report</h2> <br><br>
+<select id="cty" name="country"></select><br>
+<select id = "state" name = "state"></select><br>
+<input id = "city" type = "text" name = "city" placeholder="Enter a city" autocomplete="off">
+<button id = "btn" type = "button">REQUEST WEATHER</button><br><br>
+    
+<button id = "press" type = "button">Get Current Location</button><br><br>
+    
+<div    id = "B">
+</div><br>
+<div    id = "T">
+</div>
+
+<button id = "tz" type = "button">Get Time Zone</button><br><br>
+</div>
+</body>
+
+<script type = "text/javascript"> 
+
+    var ptrLocation = document.getElementById("B"); 
+
+    var ptrPress = document.getElementById("press"); 
+        //ptrPress.addEventListener("click", getLocation());
+        
+   	var ptrBtn = document.getElementById("btn"); 
+    
+    var ptrTimeZone = document.getElementById("tz");
+    
+    var ptrStateCode = document.getElementById("state");
+    var ptrCityCode = document.getElementById("city");
+  
+        function getLocation() {
+            if (navigator.geolocation) {
+                 
+               navigator.geolocation.getCurrentPosition(F);
+               
+            } 
+            else {
+                ptrLocation.innerHTML = "Geolocation not supported by this browser.";
+            }  
+        }
+    
+        var lat;
+        var lon;
+        function F(position) { //JSON object returned in result by getCurrentPosition 
+            lat = position.coords.latitude; 
+            lon = position.coords.longitude;
+            
+            getWeather("weather_coord.php", {data1: lat, data2: lon});
+        }
+        
+        getWeather
+    
+    var a;
+    var b;
+    
+    function getWeather(url, data) {
+    	//$(document.body).append(data1);
+    	//$(document.body).append(data2);
+        $.ajax({
+         type: 		"GET",
+         url: 		url,
+         contentType: "application/json",
+         dataType: 'json',
+         data: 		data,
+         
+	     beforeSend: function(){ 		
+		    $("#B").html("<div class='box'><br></div>");
+         },
+        
+        error: 	 function(xhr, status, error) {  
+			alert( "Error Mesaage:  \r\nNumeric code is: "  + xhr.status + " \r\nError is " + error);   },
+        
+        success: 	 function(result){
+            
+			r = result;
+            
+            
+            sunrise = r.sys.sunrise //epoch seconds 
+            //Date needs milliseconds, roughly 1000*seconds 
+            var myDate = new Date( sunrise * 1000 ); 
+            rdRise = myDate.toLocaleString(); 
+
+            sunset = r.sys.sunset //epoch seconds 
+            //Date needs milliseconds, roughly 1000*seconds 
+            var myDate2 = new Date( sunset * 1000 ); 
+            rdSet = myDate2.toLocaleString(); 
+
+            
+            res =  "<br>City: "		   + r.name + ", " + r.sys.country + " " +
+                   "<br>Coordinates: " + r.coord.lon + ", " + r.coord.lat + " "	+
+				   "<br>Temperature: " + r.main.temp + "&deg;C "         +	
+			       "<br>Weather: " 	   + r.weather[0].main + " "         +		  
+                   "<br>Description: " + r.weather[0].description +  " " +
+                   "<br>Humidity: "	   + r.main.humidity +  "% "   + " " +
+                   "<br>Wind Speed: "  + r.wind.speed +  "m/s " + " "	 +
+                   "<br>Sunrise: "     + rdRise + " "             +
+                   "<br>Sunset: "      + rdSet + " "             +
+                   "<br>";
+			
+			$("#B").html(res);
+            
+            ptrTimeZone.style.display = "block";
+            $("#T").html('');
+            a = r.coord.lat;
+            b = r.coord.lon;
+        }	
+    });
+   };
+    
+    
+$(document).ready(function(){
+    getLocation();
+    
+    $("#cty").load("country_codes.html"); 
+    $("#state").load("state_codes.html");
+    
+    $(document.body).append($("#cty").val());
+   
+  	$("#cty").change(function(){
+  			var cty = $("#cty").val();
+  			
+			if (cty == "") {
+            	ptrCityCode.style.display = "none";
+            	ptrCityCode.value = "";
+            } 
+			else if (cty != "US"){
+            	ptrStateCode.style.display = "none";
+            	ptrStateCode.value = "";
+				ptrCityCode.style.display = "block";
+			}
+			else {
+            	ptrCityCode.style.display = "none";
+            	ptrCityCode.value = "";
+            	ptrStateCode.style.display = "block";
+             }        
+        });
+  	
+  	$("#state").change(function(){
+		var state = $("#state").val();
+			
+		if (state == "") {
+        	ptrCityCode.style.display = "none";
+        	ptrCityCode.value = "";
+        } 
+		else {
+			ptrCityCode.style.display = "block";
+		}
+
+    });
+ 
+    $("#btn").click(function(){ 
+   
+     var city = $("#city").val();
+     
+     var cty = $("#cty").val();
+
+	 var state = $("#state").val();
+	 
+     if (city != '') {
+         if (cty == '') {
+             alert("Please specify the country");
+         }
+         else {
+        	 getWeather("weather_zip.php", {data1: city, data2: cty, data3: state});
+     	}
+     }
+    
+   
+     });   
+    
+    
+    $("#press").click(function(){ 
+    	getLocation();
+    });
+    
+    
+    $("#tz").click(function(){ 
+
+        $.ajax({
+                 type: 		"GET",
+                 url: 		"timezone.php",
+                 contentType: "application/json",
+                 dataType: 'json',
+                 data: 		{a: a, b: b},  
+            
+                 beforeSend: function(){ 		
+			         $("#T").html("<div class='box'><br></div>");
+                 },
+
+                 error: 	 function(xhr, status, error) {  
+                    alert( "Error Message:  \r\nNumeric code is: "  + xhr.status + " \r\nError is " + error);   },
+
+                 success: 	 function(result){
+
+                    t = result;
+
+                    res =  "<br>Time Zone: "   + t.timezone.name + ", " + t.timezone.short_name + " " +
+                           "<br>";
+                    
+                    ptrTimeZone.style.display = "none";
+                    $("#T").html(res);
+                     
+  
+                }	
+            });	    
+        }); 
+    
+});		
+
+</script>
+</html>
