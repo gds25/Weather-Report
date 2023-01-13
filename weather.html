@@ -4,42 +4,12 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 
-<style> 
-    
-.form {
-     margin: auto;
-     border: 1px dashed;
-     width: 30%;
-     padding: 20px;
-}
-    
-.box { 
-    width: 50px; 
-    height: 50px; 
-    border: 20px solid #000000; 
-    border-top: 20px solid red; 
-    border-radius: 50%; 
-    background-color: lightgray;
-
-    animation: AAA .7s linear infinite; 
-}
-@keyframes AAA {
-    0% { transform: rotate(0deg) ; }
-    50%{ transform: rotate(180deg); } 
-    100% { transform: rotate(359deg); } 
-} 
-
-#tz, #state, #city
-{
-    display: none;
-}
-    
-</style> 
-
+<link rel="stylesheet" type="text/css" href="weather.css">
  
 </head>
 
 <body>
+
 <h2> To Do: </h2> <br>
 Get weather at random location (latitude and longitude)<br>
 Store recent weather requests <br>
@@ -55,11 +25,31 @@ Update weather/location after a period of time <br><br>
 <button id = "press" type = "button">Get Current Location</button><br><br>
     
 <div    id = "B">
+      <h1 id="location">Location</h1>
+      <h1 id="date-time">Location</h1>
+      <h2 id="description">Description</h2>
+      <h1 id="temperature">Temp</h1>
+      <h2 id="celsius"><span>&#8451;</span></h2>
+      <h2 id="temp-divider">/</h2>
+      <h2 id="fahrenheit"><span>&#8457;</span></h2>
 </div><br>
 <div    id = "T">
+      <div class="details">
+        <p>Wind Speed</p>
+        <p>Humidity</p>
+        <p>Pressure</p>
+        <p>Sunrise</p>
+        <p>Sunset</p>
+      </div>
+      <div class="details-values">
+        <p class="windspeed"></p>
+        <p class="humidity"></p>
+        <p class="pressure"></p>
+        <p class="sunrise"></p>
+        <p class="sunset"></p>
+      </div>
 </div>
 
-<button id = "tz" type = "button">Get Time Zone</button><br><br>
 </div>
 </body>
 
@@ -72,11 +62,12 @@ Update weather/location after a period of time <br><br>
         
    	var ptrBtn = document.getElementById("btn"); 
     
-    var ptrTimeZone = document.getElementById("tz");
-    
     var ptrStateCode = document.getElementById("state");
     var ptrCityCode = document.getElementById("city");
-  
+    
+    var celsius;
+    var fahrenheit;
+
         function getLocation() {
             if (navigator.geolocation) {
                  
@@ -96,11 +87,7 @@ Update weather/location after a period of time <br><br>
             
             getWeather("weather_coord.php", {data1: lat, data2: lon});
         }
-        
-        getWeather
-    
-    var a;
-    var b;
+
     
     function getWeather(url, data) {
     	//$(document.body).append(data1);
@@ -113,7 +100,7 @@ Update weather/location after a period of time <br><br>
          data: 		data,
          
 	     beforeSend: function(){ 		
-		    $("#B").html("<div class='box'><br></div>");
+		    //$("#B").html("<div class='box'><br></div>");
          },
         
         error: 	 function(xhr, status, error) {  
@@ -122,36 +109,37 @@ Update weather/location after a period of time <br><br>
         success: 	 function(result){
             
 			r = result;
-            
-            
+                 
             sunrise = r.sys.sunrise //epoch seconds 
             //Date needs milliseconds, roughly 1000*seconds 
-            var myDate = new Date( sunrise * 1000 ); 
-            rdRise = myDate.toLocaleString(); 
+            var myDate = new Date( (sunrise + r.timezone) * 1000 ); 
+            rdRise = myDate.toLocaleTimeString("en-US", {timeZone: "UTC"}); 
 
             sunset = r.sys.sunset //epoch seconds 
             //Date needs milliseconds, roughly 1000*seconds 
-            var myDate2 = new Date( sunset * 1000 ); 
-            rdSet = myDate2.toLocaleString(); 
-
+            var myDate2 = new Date( (sunset + r.timezone) * 1000 ); 
+            rdSet = myDate2.toLocaleTimeString("en-US", {timeZone: "UTC"}); 
             
-            res =  "<br>City: "		   + r.name + ", " + r.sys.country + " " +
-                   "<br>Coordinates: " + r.coord.lon + ", " + r.coord.lat + " "	+
-				   "<br>Temperature: " + r.main.temp + "&deg;C "         +	
-			       "<br>Weather: " 	   + r.weather[0].main + " "         +		  
-                   "<br>Description: " + r.weather[0].description +  " " +
-                   "<br>Humidity: "	   + r.main.humidity +  "% "   + " " +
-                   "<br>Wind Speed: "  + r.wind.speed +  "m/s " + " "	 +
-                   "<br>Sunrise: "     + rdRise + " "             +
-                   "<br>Sunset: "      + rdSet + " "             +
-                   "<br>";
+            var currDate = new Date( (r.dt + r.timezone) * 1000 ); 
+			rdCurr = currDate.toLocaleString("en-US", {timeZone: "UTC"});
 			
-			$("#B").html(res);
+			
+            celsius = Math.round(r.main.temp);
+            fahrenheit = Math.round(celsius * 1.8 + 32);
             
-            ptrTimeZone.style.display = "block";
-            $("#T").html('');
-            a = r.coord.lat;
-            b = r.coord.lon;
+			$("#location").html(r.name + ", " + r.sys.country);
+			$("#date-time").html(rdCurr);
+			$("#description").html(r.weather[0].main + "/" + r.weather[0].description);
+			$("#temperature").html(celsius);
+
+			
+			$(".windspeed").html(r.wind.speed +  "km/h");
+			$(".humidity").html(r.main.humidity +  "%");
+			$(".pressure").html(r.main.pressure +  "hPa");
+			$(".sunrise").html(rdRise);
+			$(".sunset").html(rdSet);
+			
+
         }	
     });
    };
@@ -210,49 +198,29 @@ $(document).ready(function(){
              alert("Please specify the country");
          }
          else {
-        	 getWeather("weather_zip.php", {data1: city, data2: cty, data3: state});
+        	 getWeather("weather_city.php", {data1: city, data2: cty, data3: state});
      	}
      }
     
    
      });   
     
-    
     $("#press").click(function(){ 
     	getLocation();
     });
     
     
-    $("#tz").click(function(){ 
-
-        $.ajax({
-                 type: 		"GET",
-                 url: 		"timezone.php",
-                 contentType: "application/json",
-                 dataType: 'json',
-                 data: 		{a: a, b: b},  
-            
-                 beforeSend: function(){ 		
-			         $("#T").html("<div class='box'><br></div>");
-                 },
-
-                 error: 	 function(xhr, status, error) {  
-                    alert( "Error Message:  \r\nNumeric code is: "  + xhr.status + " \r\nError is " + error);   },
-
-                 success: 	 function(result){
-
-                    t = result;
-
-                    res =  "<br>Time Zone: "   + t.timezone.name + ", " + t.timezone.short_name + " " +
-                           "<br>";
-                    
-                    ptrTimeZone.style.display = "none";
-                    $("#T").html(res);
-                     
-  
-                }	
-            });	    
-        }); 
+    $("#celsius").click(function(){ 
+		$("#temperature").html(celsius);
+		$("#fahrenheit").css("color", "#b0bec5");
+		$("#celsius").css("color", "white");
+    }); 
+    
+    $("#fahrenheit").click(function(){ 
+		$("#temperature").html(fahrenheit);
+		$("#celsius").css("color", "#b0bec5");
+		$("#fahrenheit").css("color", "white");
+    }); 
     
 });		
 
