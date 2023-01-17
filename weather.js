@@ -129,23 +129,8 @@ $(document).ready(function(){
     });
  
     $("#btn").click(function(){ 
-   
-     var city = $("#city").val();
-     
-     var cty = $("#cty").val();
-
-	 var state = $("#state").val();
-	 
-     if (city != '') {
-         if (cty == '') {
-             alert("Please specify the country");
-         }
-         else {
-        	 getWeather("weather_city.php", {data1: city, data2: cty, data3: state});
-     	}
-     }
-    
-   
+    	window.location.href = 'addCity.php';
+    	return false;
      });   
     
     $("#press").click(function(){ 
